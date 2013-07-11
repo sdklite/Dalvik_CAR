@@ -177,6 +177,7 @@ bool dvmSetCARClassInfo(/*const*/ ClassObject* clazz)
 
             		    return false;
             		}
+
   		    		if (addHashCARModuleInfo(CARModule, pModuleInfo) == NULL) {
     		            LOGD("add hash _CReflector_AcquireModuleInfo Failed");
     		        }
@@ -1262,14 +1263,21 @@ bool dvmSetCARMemberHook(InstField* instField)
     funcName = (char *)alloca(10+strlen(field->name));
 
 	clazz = field->clazz;
-	if(clazz == NULL)
-		return false;
-	if (!IS_CLASS_FLAG_SET(clazz, CLASS_CAR_CLASS))
-		return false;
+	if(clazz == NULL) {
+        LOGD("dvmSetCARMemberHook <clazz == NULL>");
+        return false;
+    }
+		
+	if (!IS_CLASS_FLAG_SET(clazz, CLASS_CAR_CLASS)) {
+        LOGD("dvmSetCARMemberHook <No CLASS_CAR_CLASS>");
+        return false;
+    }
 
 	pClassInfo = (IClassInfo*)(clazz->pClassInfo);
-	if (pClassInfo == NULL)
-		return false;
+	if (pClassInfo == NULL){
+        LOGD("dvmSetCARMemberHook <pClassInfo == NULL>");
+        return false;
+    }
 
     if (instField->interfaceIndexOfSetter == 0xFFFF || instField->interfaceIndexOfSetter == 0xFFFE) {
 
@@ -1341,7 +1349,8 @@ bool dvmSetCARMemberHook(InstField* instField)
     	    snprintf(buf, sizeof(buf)-1, "Delegate defination error, no this callback:%s", field->name);
     	    dvmThrowException("Ljava/lang/IllegalArgumentException;", buf);
 #endif
-    		return false;
+    		LOGD("dvmSetCARMemberHook <final false>");
+            return false;
         }
         return  true;
     }
@@ -1779,8 +1788,10 @@ void dvmShutdownMsgLoopThread(void *pAppletObj)
 //shutdown not main thread's MsgLoopThread
 void dvmAttachMsgLoopThread(void *pAppletObj)
 {
-    if (!gDvm.shouldCARWorking)
+    if (!gDvm.shouldCARWorking){
+        LOGW("dvmAttachMsgLoopThread  shouldCARWorking false.");
         return;
+    }
 
 	LOGD("dvmAttachMsgLoopThread");
 
@@ -1794,8 +1805,10 @@ void dvmAttachMsgLoopThread(void *pAppletObj)
 
 void dvmDetachMsgLoopThread()
 {
-    if (!gDvm.shouldCARWorking)
+    if (!gDvm.shouldCARWorking){
+        LOGW("dvmDetachMsgLoopThread  shouldCARWorking false.");
         return;
+    }
 
 	LOGD("dvmDetachMsgLoopThread");
 

@@ -15,7 +15,6 @@ using namespace Elastos;
 #define PATH_MAX  4096
 //#define __WITH_ELASTOS_NAME_CHECK
 
-static void* handle_ecoloader = NULL;
 //global handle of Elastos.so
 static void* handle_elastos = NULL;
 static void* handle_ElCRuntime = NULL;
@@ -193,66 +192,25 @@ bool ElapiInitialize()
 	    return true;
 
 	//elastosPath = getenv("ELASTOS_JS_ROOT");
-	if(NULL == elastosPath) {
+	if (NULL == elastosPath) {
         elastosPath = "/data/data/com.elastos.runtime/elastos";
 	}
 
-	if( strlen(elastosPath) >= PATH_MAX-12)
+	if (strlen(elastosPath) >= PATH_MAX-12)
 	    return  false;
 
 	strcpy(fullPath, elastosPath);
     i = strlen(fullPath);
 
-    if(fullPath[i-1] != '/'){
+    if (fullPath[i-1] != '/') {
         strcpy(fullPath+i, "/");
         i++;
     }
 	strcpy(fullPath+i, extraFile);
 
-	// dlopen(elfloader.dll)
-	handle_ecoloader = dlopen("/data/data/com.elastos.runtime/elastos/ecoloader.dso", RTLD_LAZY);
-	if (NULL == handle_ecoloader) {
-		LOGE("dlopen ecoloader.dso failed");
-        dvmSetgDvmshouldCARWorking(false);
-        return false;
-	} else {
-		LOGE("dlopen ecoloader.dso OK");
-	}
-
-	// dlsym(LoadElfModule)
-	void* (*pLoadElfModule)(const char*, const char*, int);
-	// attention: function name format: __DLL_FUN
-	pLoadElfModule = (void* (*)(const char*, const char*, int))dlsym(handle_ecoloader, "__ecoloader_LoadElfModule");
-	if (NULL == pLoadElfModule) {
-	    LOGE("dlsym LoadElfModule failed");
-        dvmSetgDvmshouldCARWorking(false);
-        return false;
-	} else {
-	    LOGE("dlsym LoadElfModule ok");
-	}
-
-	// dlsym(GetElfModuleSymbol)
-	void* (*pGetElfModuleSymbol)(void*, char*);
-	pGetElfModuleSymbol = (void* (*)(void*, char*))dlsym(handle_ecoloader, "__ecoloader_GetElfModuleSymbol");
-	if (NULL == pGetElfModuleSymbol) {
-	    LOGE("dlsym GetElfModuleSymbol failed");
-        dvmSetgDvmshouldCARWorking(false);;
-        return false;
-	} else {
-	    LOGE("dlsym GetElfModuleSymbol ok");
-	}
-
 	// LoadElfModule(elastos.dll)
-	handle_elastos = pLoadElfModule("/data/data/com.elastos.runtime/elastos", "Elastos.Runtime.CarRuntime.eco", RTLD_LAZY); // flag right?
-	if (NULL == handle_elastos) {
-	    LOGE("LoadElfModule Elastos.Runtime.CarRuntime.eco failed");
-        dvmSetgDvmshouldCARWorking(false);
-        return false;
-	} else {
-	    LOGE("LoadElfMoudule Elastos.Runtime.CarRuntime.eco ok");
-	}
 
-	handle_ElCRuntime = pLoadElfModule("/data/data/com.elastos.runtime/elastos", "Elastos.Runtime.eco", RTLD_LAZY); // flag right?
+	handle_ElCRuntime = dlopen("/data/data/com.elastos.runtime/elastos/Elastos.Runtime.eco", RTLD_LAZY);
 	if (NULL == handle_ElCRuntime) {
 	    LOGE("LoadElfModule Elastos.Runtime.eco failed");
         dvmSetgDvmshouldCARWorking(false);
@@ -262,238 +220,238 @@ bool ElapiInitialize()
 	}
 
 	elastos_getTlSystemSlotBase =
-			(t_elastos_getTlSystemSlotBase)pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime_getTlSystemSlotBase");
+			(t_elastos_getTlSystemSlotBase)dlsym(handle_elastos, (char*)"getTlSystemSlotBase");
 
 	_CObject_CreateInstance_Internal =
 			(ELFUNC(*)(_ELASTOS RClassID, PContext,
-    	 	_ELASTOS REIID, PInterface*))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CObject_CreateInstance");
+    	 	_ELASTOS REIID, PInterface*))dlsym(handle_elastos, (char*)"_CObject_CreateInstance");
 
 	CheckError();
 
 	_CObject_AddCallback_Internal =
 			(ELFUNC(*)(PInterface, _ELASTOS Int32,
-    		_ELASTOS EventHandler))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CObject_AddCallback");
+    		_ELASTOS EventHandler))dlsym(handle_elastos, (char*)"_CObject_AddCallback");
 	LOGD("_CObject_AddCallback_Internal, addr:0x%x", (int)_CObject_AddCallback_Internal);
 	CheckError();
 
 	_CObject_RemoveCallback_Internal =
 			(ELFUNC(*)(PInterface, _ELASTOS Int32,
-    		_ELASTOS EventHandler))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CObject_RemoveCallback");
+    		_ELASTOS EventHandler))dlsym(handle_elastos, (char*)"_CObject_RemoveCallback");
 
 	CheckError();
 
 	_CObject_ReflectClassInfo_Internal =
-			(ELFUNC(*)(PInterface, IClassInfo**))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CObject_ReflectClassInfo");
+			(ELFUNC(*)(PInterface, IClassInfo**))dlsym(handle_elastos, (char*)"_CObject_ReflectClassInfo");
 
 	CheckError();
 
 	_Impl_CallbackSink_RequestToFinish_Internal =
-			(ELFUNC(*)(PInterface, _ELASTOS Int32))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CallbackSink_RequestToFinish");
+			(ELFUNC(*)(PInterface, _ELASTOS Int32))dlsym(handle_elastos, (char*)"_Impl_CallbackSink_RequestToFinish");
 
 	CheckError();
 
 	_Impl_CallbackSink_InitCallbackContext_Internal =
-			(ELFUNC(*)(PInterface *ppCallbackContext))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CallbackSink_InitCallbackContext");
+			(ELFUNC(*)(PInterface *ppCallbackContext))dlsym(handle_elastos, (char*)"_Impl_CallbackSink_InitCallbackContext");
 
 	CheckError();
 
 	_Impl_CallbackSink_TryToHandleEvents_Internal =
-			(ELFUNC(*)(IInterface* pCallbackContext))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CallbackSink_TryToHandleEvents");
+			(ELFUNC(*)(IInterface* pCallbackContext))dlsym(handle_elastos, (char*)"_Impl_CallbackSink_TryToHandleEvents");
 
 	CheckError();
 
 	_CReflector_AcquireModuleInfo_Internal =
-			(_ELASTOS ECode __cdecl (*)(Elastos::String, IModuleInfo**))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CReflector_AcquireModuleInfo");
+			(_ELASTOS ECode __cdecl (*)(Elastos::String, IModuleInfo**))dlsym(handle_elastos, (char*)"_CReflector_AcquireModuleInfo");
 
 	CheckError();
 
 	// mayq add, til end
-	_Impl_SetHelperInfoFlag_Internal = (void __cdecl(*)(_ELASTOS Flags32, _ELASTOS Boolean)) pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_SetHelperInfoFlag");
+	_Impl_SetHelperInfoFlag_Internal = (void __cdecl(*)(_ELASTOS Flags32, _ELASTOS Boolean)) dlsym(handle_elastos, (char*)"_Impl_SetHelperInfoFlag");
 
 	CheckError();
 	// mayq end
 
 	_CarQuintet_Init_Internal =
 			(_ELASTOS PCarQuintet __cdecl (*)(_ELASTOS PCarQuintet, _ELASTOS PVoid, _ELASTOS Int32,
-		 	_ELASTOS Int32, _ELASTOS CarQuintetFlags))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CarQuintet_Init");
+		 	_ELASTOS Int32, _ELASTOS CarQuintetFlags))dlsym(handle_elastos, (char*)"_CarQuintet_Init");
 
 	CheckError();
 
 	_CarQuintet_Clone_Internal = (_ELASTOS PCarQuintet __cdecl(*)(const _ELASTOS PCarQuintet))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CarQuintet_Clone");
+									dlsym(handle_elastos, (char*)"_CarQuintet_Clone");
 
 	CheckError();
 
 	_CarQuintet_Free_Internal = (void __cdecl(*)(_ELASTOS PCarQuintet))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CarQuintet_Free");
+									dlsym(handle_elastos, (char*)"_CarQuintet_Free");
 
 	CheckError();
 
 	_CarQuintet_GetNullValue_Internal = (_ELASTOS PCarQuintet __cdecl(*)(_ELASTOS CarQuintetFlags))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CarQuintet_GetNullValue");
+									dlsym(handle_elastos, (char*)"_CarQuintet_GetNullValue");
 
 	CheckError();
 
 	_ArrayOf_Copy_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet, const _ELASTOS CarQuintet*))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__CarQuintet_Clone");
+									dlsym(handle_elastos, (char*)"_CarQuintet_Clone");
 
 	CheckError();
 
 	_ArrayOf_CopyEx_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet,
 			const _ELASTOS Byte*, _ELASTOS Int32))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__ArrayOf_CopyEx");
+									dlsym(handle_elastos, (char*)"_ArrayOf_CopyEx");
 
 	CheckError();
 
 	_ArrayOf_Alloc_Internal = (_ELASTOS PCarQuintet __cdecl(*)(_ELASTOS Int32,
 			_ELASTOS CarQuintetFlags))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__ArrayOf_Alloc");
+									dlsym(handle_elastos, (char*)"_ArrayOf_Alloc");
 
 	CheckError();
 
 	_ArrayOf_Alloc_Box_Internal = (_ELASTOS PCarQuintet __cdecl(*)(_ELASTOS PVoid,
             _ELASTOS Int32, _ELASTOS CarQuintetFlags))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__ArrayOf_Alloc_Box");
+									dlsym(handle_elastos, (char*)"_ArrayOf_Alloc_Box");
 
 	CheckError();
 
 	_ArrayOf_Replace_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet,
             _ELASTOS Int32, const _ELASTOS PByte, _ELASTOS Int32))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__ArrayOf_Replace");
+									dlsym(handle_elastos, (char*)"_ArrayOf_Replace");
 
 	CheckError();
 
 	_BufferOf_Alloc_Internal = (_ELASTOS PCarQuintet __cdecl(*)(_ELASTOS Int32,
 	        _ELASTOS CarQuintetFlags))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__BufferOf_Alloc");
+									dlsym(handle_elastos, (char*)"_BufferOf_Alloc");
 
 	CheckError();
 
 	_BufferOf_Alloc_Box_Internal = (_ELASTOS PCarQuintet __cdecl(*)(_ELASTOS PVoid,
             _ELASTOS Int32, _ELASTOS Int32,
             _ELASTOS CarQuintetFlags))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__BufferOf_Alloc_Box");
+									dlsym(handle_elastos, (char*)"_BufferOf_Alloc_Box");
 
 	CheckError();
 
 	_BufferOf_Insert_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet,
             _ELASTOS Int32, const _ELASTOS PByte, _ELASTOS MemorySize))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__BufferOf_Insert");
+									dlsym(handle_elastos, (char*)"_BufferOf_Insert");
 
 	CheckError();
 
 	_BufferOf_Replace_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet,
             _ELASTOS Int32, const _ELASTOS PByte, _ELASTOS Int32))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__BufferOf_Replace");
+									dlsym(handle_elastos, (char*)"_BufferOf_Replace");
 
 	CheckError();
 
 	_BufferOf_Copy_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet,
             const _ELASTOS CarQuintet*))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__BufferOf_Copy");
+									dlsym(handle_elastos, (char*)"_BufferOf_Copy");
 
 	CheckError();
 
 	_BufferOf_CopyEx_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet,
             const _ELASTOS Byte*, _ELASTOS Int32))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__BufferOf_CopyEx");
+									dlsym(handle_elastos, (char*)"_BufferOf_CopyEx");
 
 	CheckError();
 
 	_BufferOf_Append_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet,
             const _ELASTOS PByte, _ELASTOS MemorySize))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__BufferOf_Append");
+									dlsym(handle_elastos, (char*)"_BufferOf_Append");
 
 	CheckError();
 
 	_MemoryBuf_SetByteValue_Internal =
-			(void (*)(_ELASTOS PCarQuintet, _ELASTOS Byte))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__MemoryBuf_SetByteValue");
+			(void (*)(_ELASTOS PCarQuintet, _ELASTOS Byte))dlsym(handle_elastos, (char*)"_MemoryBuf_SetByteValue");
 
 	CheckError();
 
 	_MemoryBuf_Compare_Internal = (_ELASTOS Int32 __cdecl(*)(const _ELASTOS PCarQuintet,
             const _ELASTOS Byte*, _ELASTOS Int32))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__MemoryBuf_Compare");
+									dlsym(handle_elastos, (char*)"_MemoryBuf_Compare");
 
 	CheckError();
 
 	_StringBuf_SetLength_Internal = (_ELASTOS Int32 __cdecl(*)(_ELASTOS PCarQuintet,
     	_ELASTOS Int32))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__StringBuf_SetLength");
+									dlsym(handle_elastos, (char*)"_StringBuf_SetLength");
 
 	CheckError();
 
 	_StringBuf_Alloc_Internal = (_ELASTOS PCarQuintet __cdecl(*)(_ELASTOS Int32 length))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__StringBuf_Alloc");
+									dlsym(handle_elastos, (char*)"_StringBuf_Alloc");
 
 	CheckError();
 
 	_String_GetLength_Internal = (_ELASTOS Int32 __cdecl (*)(const char *str,
-			Int32 maxLen))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__String_GetLength");
+			Int32 maxLen))dlsym(handle_elastos, (char*)"_String_GetLength");
 
 	_Impl_CheckClsId_Internal = (_ELASTOS ECode(*)(PInterface, const _ELASTOS ClassID*,
-   		PInterface*))pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CheckClsId");
+   		PInterface*))dlsym(handle_elastos, (char*)"_Impl_CheckClsId");
 
 	CheckError();
 
 	_Impl_EnterProtectedZone_Internal = (ELFUNC (*)())
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_EnterProtectedZone");
+								dlsym(handle_elastos, (char*)"_Impl_EnterProtectedZone");
 
 	CheckError();
 
 	_Impl_LeaveProtectedZone_Internal = (ELFUNC (*)())
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_LeaveProtectedZone");
+								dlsym(handle_elastos, (char*)"_Impl_LeaveProtectedZone");
 
 	CheckError();
 
 	_Impl_CallbackSink_CancelPendingCallback_Internal = (ELFUNC (*)(IInterface *, PInterface , CallbackEventId ))
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CallbackSink_CancelPendingCallback");
+								dlsym(handle_elastos, (char*)"_Impl_CallbackSink_CancelPendingCallback");
 
 	CheckError();
 
 	_Impl_CallbackSink_GetCallbackContext_Internal = (ELFUNC (*)(PInterface *))
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CallbackSink_GetCallbackContext");
+								dlsym(handle_elastos, (char*)"_Impl_CallbackSink_GetCallbackContext");
 	//LOGD("_Impl_CallbackSink_GetCallbackContext_Internal=0x%x", _Impl_CallbackSink_GetCallbackContext_Internal);
 
 	CheckError();
 
 	_Impl_CallbackSink_CancelCallbackEvents_Internal = (ELFUNC (*)(IInterface *, PInterface, CallbackEventId, PVoid, PVoid ))
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CallbackSink_CancelCallbackEvents");
+								dlsym(handle_elastos, (char*)"_Impl_CallbackSink_CancelCallbackEvents");
 
 	CheckError();
 
 	_Impl_CallbackSink_AcquireCallbackContext_Internal = (ELFUNC (*)(PInterface *))
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CallbackSink_AcquireCallbackContext");
+								dlsym(handle_elastos, (char*)"_Impl_CallbackSink_AcquireCallbackContext");
 	//LOGD("_Impl_CallbackSink_AcquireCallbackContext_Internal=0x%x",_Impl_CallbackSink_AcquireCallbackContext_Internal);
 	CheckError();
 
 	_Impl_CCallbackRendezvous_New_Internal = (ELFUNC (*)(PInterface , ICallbackSink* , CallbackEventId ,
 											Boolean* , Boolean , ICallbackRendezvous** ))
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__Impl_CCallbackRendezvous_New");
+								dlsym(handle_elastos, (char*)"_Impl_CCallbackRendezvous_New");
 	CheckError();
 
 	_String_Compare_Internal = (ELFUNC (*)(const char*, const char*, StringCase))
-										pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__String_Compare");
+										dlsym(handle_elastos, (char*)"_String_Compare");
 
 	CheckError();
 
 	_StringBuf_StartWith_Internal = (_ELASTOS Boolean __cdecl (*)(const PCarQuintet,
 											   const char *,
 											   StringCase))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__StringBuf_StartWith");
+									dlsym(handle_elastos, (char*)"_StringBuf_StartWith");
 	CheckError();
 
 	_StringBuf_EndWith_Internal = (_ELASTOS Boolean __cdecl (*)(const PCarQuintet,
 											   const char *,
 											   StringCase))
-									pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__StringBuf_EndWith");
+									dlsym(handle_elastos, (char*)"_StringBuf_EndWith");
 	CheckError();
 
 	_StringBuf_Insert_Internal = (_ELASTOS Int32 __cdecl (*)(
 									_ELASTOS PCarQuintet,
 									_ELASTOS Int32,
 									_ELASTOS String))
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__StringBuf_Insert");
+								dlsym(handle_elastos, (char*)"_StringBuf_Insert");
 
 	CheckError();
 
@@ -501,14 +459,14 @@ bool ElapiInitialize()
 							_ELASTOS PCarQuintet,
 							_ELASTOS Int32,
 							_ELASTOS Flags32))
-						pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__StringBuf_Append_Int32");
+						dlsym(handle_elastos, (char*)"_StringBuf_Append_Int32");
 
 	CheckError();
 
 	_StringBuf_Copy_Internal = (_ELASTOS Int32 __cdecl (*)(
 									_ELASTOS PCarQuintet,
 									_ELASTOS String))
-								pGetElfModuleSymbol(handle_elastos, (char*)"__Elastos_Runtime_CarRuntime__StringBuf_Copy");
+								dlsym(handle_elastos, (char*)"_StringBuf_Copy");
 	CheckError();
 
 	LOGD("ElapiInitialize successful");
@@ -526,20 +484,14 @@ Err:
 
 void ElapiUninitialize()
 {
-	if(handle_elastos != NULL)
-	{
-		int (*pCloseElfModule)(void*);
-		// attention: function name format: __DLL_FUN
-		pCloseElfModule = (int (*)(void*))dlsym(handle_ecoloader, "__ecoloader_CloseElfModule");
-		if (NULL == pCloseElfModule) {
-			LOGE("dlsym pCloseElfModule failed");
-		} else {
-		    pCloseElfModule(handle_elastos);
-		    handle_elastos = NULL;
-		}
+	if (handle_elastos != NULL) {
+		dlclose(handle_elastos);
+		handle_elastos = NULL;
+	}
 
-		dlclose(handle_ecoloader);
-		handle_ecoloader = NULL;
+	if (handle_ElCRuntime != NULL) {
+		dlclose(handle_ElCRuntime);
+		handle_ElCRuntime = NULL;
 	}
 }
 

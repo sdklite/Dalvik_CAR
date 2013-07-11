@@ -202,6 +202,7 @@ ECode CJavaCallbackInvocation::OrganizeParameters(
                 args[i].d = val;
                 break;
                 }
+//            case CarDataType_CString:
             case CarDataType_String: {
                 String val;
                 pCallbackArgumentList->GetStringArgument(i, &val);
