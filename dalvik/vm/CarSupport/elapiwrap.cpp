@@ -17,7 +17,6 @@ using namespace Elastos;
 
 //global handle of Elastos.so
 static void* handle_elastos = NULL;
-static void* handle_ElCRuntime = NULL;
 
 extern "C" void dvmSetgDvmshouldCARWorking(bool b);
 
@@ -210,8 +209,8 @@ bool ElapiInitialize()
 
 	// LoadElfModule(elastos.dll)
 
-	handle_ElCRuntime = dlopen("/data/data/com.elastos.runtime/elastos/Elastos.Runtime.eco", RTLD_LAZY);
-	if (NULL == handle_ElCRuntime) {
+	handle_elastos = dlopen("/data/data/com.elastos.runtime/elastos/Elastos.Runtime.eco", RTLD_LAZY);
+	if (NULL == handle_elastos) {
 	    LOGE("LoadElfModule Elastos.Runtime.eco failed");
         dvmSetgDvmshouldCARWorking(false);
         return false;
@@ -231,7 +230,7 @@ bool ElapiInitialize()
 	_CObject_AddCallback_Internal =
 			(ELFUNC(*)(PInterface, _ELASTOS Int32,
     		_ELASTOS EventHandler))dlsym(handle_elastos, (char*)"_CObject_AddCallback");
-	LOGD("_CObject_AddCallback_Internal, addr:0x%x", (int)_CObject_AddCallback_Internal);
+	LOGD("_CObject_AddCallback, addr:0x%x", (int)_CObject_AddCallback_Internal);
 	CheckError();
 
 	_CObject_RemoveCallback_Internal =
@@ -487,11 +486,6 @@ void ElapiUninitialize()
 	if (handle_elastos != NULL) {
 		dlclose(handle_elastos);
 		handle_elastos = NULL;
-	}
-
-	if (handle_ElCRuntime != NULL) {
-		dlclose(handle_ElCRuntime);
-		handle_ElCRuntime = NULL;
 	}
 }
 
